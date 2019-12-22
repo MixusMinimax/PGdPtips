@@ -40,6 +40,11 @@ public class MbStream<T>
 		return neutral;
 	}
 
+	/**
+	 * Not like the real implementation of collect, this just returns the elements directly.
+	 *
+	 * @return elements
+	 */
 	public Collection<T> collect()
 	{
 		return elements;
