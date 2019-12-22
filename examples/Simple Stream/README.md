@@ -1,1 +1,8 @@
-# a simple stream implementation
+# MbStream
+a simple stream implementation
+
+supports functions as
+* foreach
+* filter
+* map
+* reduce
