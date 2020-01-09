@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Maxi Barmetler, ge36yog
- * @version 0.1.1
+ * @version 0.2.1
  * <p>
  * -----INFORMATION-----
  * - adjust the parameters in the designated areas
