@@ -10,14 +10,14 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Maxi Barmetler, ge36yog
@@ -46,7 +46,7 @@ public class MbTestStream
 	private static String createRandomString(int size)
 	{
 		return RANDOM.ints(48, 123).filter(e -> e < 58 || (e > 64 && (e < 91 || e > 96))).limit(size)
-				.mapToObj(e -> e + "").collect(Collectors.joining());
+				.mapToObj(e -> (char) e + "").collect(Collectors.joining());
 	}
 
 	/**
@@ -407,8 +407,24 @@ public class MbTestStream
 
 			String append = createRandomString(10);
 
-			realStream = realStream.map(e-> e + append);
-			pgdpStream = pgdpStream.map(e-> e + append);
+			Predicate<String> pred1 = e -> e.length() % 2 == 0;
+			Function<String, String> mapper1 = e -> e + append;
+
+			realStream = realStream.map(mapper1).filter(pred1).map(e -> {
+				if (!e.contains("a"))
+					return "error " + e.substring(0, 20);
+				return e;
+			}).filter(e->e.startsWith("error "));
+
+			pgdpStream = pgdpStream.map(mapper1).filter(pred1).mapChecked(e -> {
+				if (!e.contains("a"))
+					throw new Exception("error " + e.substring(0, 20));
+				return e;
+			}).onErrorMapChecked(e->e.get(0).getLocalizedMessage()).mapChecked(e->{
+				if (!e.startsWith("error "))
+					throw new Exception();
+				return e;
+			}).onErrorFilter();
 
 			List<String> expectedList = realStream.collect(Collectors.toList());
 			List<String> actualList = (List<String>) pgdpStream.toCollection(ArrayList::new);
