@@ -2,24 +2,22 @@ package pgdp.stream;
 
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.DynamicTest;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 
-import javax.print.attribute.standard.NumberUp;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * @author Maxi Barmetler, ge36yog
@@ -34,7 +32,7 @@ public class MbTestStream
 {
 	/*------------------------PARAMETERS---*/
 	private static final long STATIC_SEED = -1; // -1 for current time
-	private static final int N_TESTS = 0;      // 0 for individual adjustments
+	private static final int N_TESTS = 100;      // 0 for individual adjustments
 	/*-------------------------------------*/
 
 	private static final Random RANDOM = new Random(STATIC_SEED == -1 ? System.currentTimeMillis() : STATIC_SEED);
@@ -71,37 +69,6 @@ public class MbTestStream
 	private static List<Integer> createRandomIntList(int minSizeInclusive, int maxSizeExclusive)
 	{
 		return createRandomIntList(RANDOM.nextInt(maxSizeExclusive - minSizeInclusive) + minSizeInclusive);
-	}
-
-	private static enum Op
-	{
-		FILTER
-	}
-
-	@SuppressWarnings("unchecked") private static <IN extends Number, OUT extends Number> pgdp.stream.Stream<OUT> addOperation(
-			pgdp.stream.Stream<IN> upStream, @NotNull Op op, Object operation)
-	{
-		switch (op)
-		{
-		case FILTER:
-			return (pgdp.stream.Stream<OUT>) upStream.filter((Predicate<IN>) operation);
-
-		default:
-			return (pgdp.stream.Stream<OUT>) upStream;
-		}
-	}
-
-	@SuppressWarnings("unchecked") private static <IN extends Number, OUT extends Number> java.util.stream.Stream<OUT> addOperation(
-			java.util.stream.Stream<IN> upStream, @NotNull Op op, Object operation)
-	{
-		switch (op)
-		{
-		case FILTER:
-			return (Stream<OUT>) upStream.filter((Predicate<? super IN>) operation);
-
-		default:
-			return (Stream<OUT>) upStream;
-		}
 	}
 
 	private static List<DynamicTest> createTestList(Consumer<Long> tests, String name, int size)
@@ -335,13 +302,13 @@ public class MbTestStream
 			switch (index.intValue())
 			{
 			case 0:
-				realStream = addOperation(realStream, Op.FILTER, pred = e -> true);
-				pgdpStream = addOperation(pgdpStream, Op.FILTER, pred = e -> true);
+				realStream = realStream.filter(e -> true);
+				pgdpStream = pgdpStream.filter(e -> true);
 				break;
 
 			case 1:
-				realStream = addOperation(realStream, Op.FILTER, pred = e -> false);
-				pgdpStream = addOperation(pgdpStream, Op.FILTER, pred = e -> false);
+				realStream = realStream.filter(e -> false);
+				pgdpStream = pgdpStream.filter(e -> false);
 				break;
 
 			default:
@@ -350,8 +317,8 @@ public class MbTestStream
 					final int mod = RANDOM.nextInt(63) + 1;
 					pred = (num) -> num % mod != 0;
 
-					realStream = addOperation(realStream, Op.FILTER, pred);
-					pgdpStream = addOperation(pgdpStream, Op.FILTER, pred);
+					realStream = realStream.filter(pred);
+					pgdpStream = pgdpStream.filter(pred);
 				}
 			}
 
