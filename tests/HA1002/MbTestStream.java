@@ -38,12 +38,46 @@ public class MbTestStream
 	private static final Random RANDOM = new Random(STATIC_SEED == -1 ? System.currentTimeMillis() : STATIC_SEED);
 
 	/**
+	 * random String, fixed size
+	 *
+	 * @param size - length of String
+	 * @return random String
+	 */
+	private static String createRandomString(int size)
+	{
+		return RANDOM.ints(48, 123).filter(e -> e < 58 || (e > 64 && (e < 91 || e > 96))).limit(size)
+				.mapToObj(e -> e + "").collect(Collectors.joining());
+	}
+
+	/**
+	 * random String, random size
+	 *
+	 * @param minSizeInclusive - minimum size of String (inclusive)
+	 * @param maxSizeExclusive - maximum size of String (exclusive)
+	 * @return random String
+	 */
+	private static String createRandomString(int minSizeInclusive, int maxSizeExclusive)
+	{
+		return createRandomString(RANDOM.nextInt(maxSizeExclusive - minSizeInclusive) + minSizeInclusive);
+	}
+
+	/**
+	 * random String, random size between 20 and 50
+	 *
+	 * @return random String
+	 */
+	private static String createRandomString()
+	{
+		return createRandomString(20, 50);
+	}
+
+	/**
 	 * Random numbers, fixed size
 	 *
 	 * @param size - size of List
 	 * @return random List
 	 */
-	private static <T extends Number> List<T> createRandomList(Supplier<T> creator, int size)
+	private static <T> List<T> createRandomList(Supplier<T> creator, int size)
 	{
 		return Stream.generate(creator).limit(size).collect(Collectors.toList());
 	}
@@ -69,6 +103,29 @@ public class MbTestStream
 	private static List<Integer> createRandomIntList(int minSizeInclusive, int maxSizeExclusive)
 	{
 		return createRandomIntList(RANDOM.nextInt(maxSizeExclusive - minSizeInclusive) + minSizeInclusive);
+	}
+
+	/**
+	 * Random Strings, fixed size
+	 *
+	 * @param size - size of List
+	 * @return random List
+	 */
+	private static List<String> createRandomStringList(int size)
+	{
+		return createRandomList(MbTestStream::createRandomString, size);
+	}
+
+	/**
+	 * Random Strings, random size
+	 *
+	 * @param minSizeInclusive - minimum size of List (inclusive)
+	 * @param maxSizeExclusive - maximum size of List (exclusive)
+	 * @return random List
+	 */
+	private static List<String> createRandomStringList(int minSizeInclusive, int maxSizeExclusive)
+	{
+		return createRandomStringList(RANDOM.nextInt(maxSizeExclusive - minSizeInclusive) + minSizeInclusive);
 	}
 
 	private static List<DynamicTest> createTestList(Consumer<Long> tests, String name, int size)
@@ -328,5 +385,36 @@ public class MbTestStream
 			assertEquals(expectedList, actualList, "Wrong List in test " + index);
 
 		}, "filter", nTests);
+	}
+
+	@TestFactory List<DynamicTest> stringStream()
+	{
+		/*---PARAMETERS---*/
+		int nTests = 10;
+		/*----------------*/
+
+		if (N_TESTS > 0)
+			nTests = N_TESTS;
+
+		return createTestList((index) -> {
+
+			List<String> words;
+
+			words = createRandomStringList(10, 100);
+
+			java.util.stream.Stream<String> realStream = words.stream();
+			pgdp.stream.Stream<String> pgdpStream = pgdp.stream.Stream.of(words);
+
+			String append = createRandomString(10);
+
+			realStream = realStream.map(e-> e + append);
+			pgdpStream = pgdpStream.map(e-> e + append);
+
+			List<String> expectedList = realStream.collect(Collectors.toList());
+			List<String> actualList = (List<String>) pgdpStream.toCollection(ArrayList::new);
+
+			assertEquals(expectedList, actualList, "Wrong List in test " + index);
+
+		}, "stringStream", nTests);
 	}
 }
