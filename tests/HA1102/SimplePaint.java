@@ -209,7 +209,7 @@ public class SimplePaint implements Runnable
 
 		@Override public void mouseDragged(MouseEvent e)
 		{
-			if (((e.getModifiersEx() >> 10) & 0b11) == 1)
+			if (SwingUtilities.isLeftMouseButton(e))
 			{
 				this.currentColor = 0xffffff;
 			} else
